@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Ktisis.Util {
 	public static class AutoReset {
@@ -7,25 +7,24 @@ namespace Ktisis.Util {
 			GPoseCamera,
 		}
 		
-		private static Dictionary<ResetType, List<Action>> _resetActions = new();
+		private static ConcurrentDictionary<ResetType, ConcurrentQueue<Action>> _resetActions = new();
 		
 		public static void Set<T>(ResetType type, T value, Action<T> set, T newValue) {
 			if (!_resetActions.ContainsKey(type))
 				_resetActions[type] = [];
 			
-			_resetActions[type].Add(() => set(value));
+			_resetActions[type].Enqueue(() => set(value));
 			set(newValue);
 		}
 		
 		public static void Reset(ResetType type) {
-			if (!_resetActions.TryGetValue(type, out List<Action>? value))
-				return;
-			
-			foreach (var action in value) {
-				action();
-			}
-			
-			_resetActions.Clear();
+			Services.Framework.RunOnFrameworkThread(() => {
+				if (!_resetActions.TryGetValue(type, out var value))
+					return;
+
+				while (value.TryDequeue(out var action))
+					action();
+			});
 		}
 
 		public static void ResetAll() {
