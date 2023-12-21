@@ -316,12 +316,18 @@ namespace Ktisis.Interface.Windows.Workspace.Tabs {
 
 			var delimit = gposeCam->DistanceMax > 20;
 			if (ImGui.Checkbox("Delimit camera", ref delimit)) {
-				var max = delimit ? 350 : 20;
-				gposeCam->DistanceMax = max;
-				gposeCam->DistanceMin = delimit ? 0 : 1.5f;
-				gposeCam->Distance = Math.Clamp(gposeCam->Distance, 0, max);
-				gposeCam->YMin = delimit ? 1.5f : 1.25f;
-				gposeCam->YMax = delimit ? -1.5f : -1.4f;
+				if (!delimit) {
+					AutoReset.Reset(AutoReset.ResetType.GPoseCamera);
+				} else {
+					AutoReset.Set(AutoReset.ResetType.GPoseCamera, gposeCam->DistanceMin, v => gposeCam->DistanceMin = v, 0);
+					AutoReset.Set(AutoReset.ResetType.GPoseCamera, gposeCam->DistanceMax, v => {
+						gposeCam->DistanceMax = v;
+						gposeCam->Distance = Math.Clamp(gposeCam->Distance, gposeCam->DistanceMin, v);
+					}, 350);
+
+					AutoReset.Set(AutoReset.ResetType.GPoseCamera, gposeCam->YMin, v => gposeCam->YMin = v, 1.5f);
+					AutoReset.Set(AutoReset.ResetType.GPoseCamera, gposeCam->YMax, v => gposeCam->YMax = v, -1.5f);
+				}
 			}
 
 			ImGui.SameLine();

@@ -15,6 +15,7 @@ using Ktisis.Structs.Actor;
 using Ktisis.History;
 using Ktisis.Events;
 using Ktisis.Overlay;
+using Ktisis.Util;
 
 namespace Ktisis {
 	public sealed class Ktisis : IDalamudPlugin {
@@ -123,6 +124,7 @@ namespace Ktisis {
 			foreach (var (_, texture) in References.Textures) {
 				texture.Dispose();
 			}
+			AutoReset.ResetAll();
 		}
 
 		private void OnCommand(string command, string arguments) {
